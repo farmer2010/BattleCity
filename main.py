@@ -5,12 +5,13 @@ import math
 import world
 import ui
 
-pygame.mixer.pre_init(44100, -16, channels=64, buffer=512)
+pygame.mixer.pre_init()
 pygame.init()
 keep_going = True
 steps = 0
 mousedown = False
 mousetag = False
+pygame.mixer.set_num_channels(1000)
 
 W = pygame.display.Info().current_w
 H = pygame.display.Info().current_h
@@ -33,6 +34,7 @@ timer2 = 0
 game_world = None
 pl1 = None
 pl2 = None
+diesound = pygame.mixer.Sound("files/sounds/enemy_death.mp3")
 
 while keep_going:
     steps += 1

@@ -28,6 +28,7 @@ class Block(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = pos[0] * 32 + self.world.game_window_pos[0]
         self.rect.y = pos[1] * 32 + self.world.game_window_pos[1]
+        self.time = 1
 
     def update(self):
         if self.type == "brick":
@@ -94,6 +95,11 @@ class Block(pygame.sprite.Sprite):
                                 a = 1#pass
 
     def draw(self, screen):
+        if self.type == "water":
+            self.time += 1
+            self.time %= 60
+            if self.time % 30 == 0:
+                self.image = get_images.get_block_image(2, 1 + self.time // 30)
         if self.type != "air":
             screen.blit(self.image, self.rect)
 

@@ -256,7 +256,7 @@ class World():
         if self.start_pos <= self.H / 2:#Анимация в начале уровня
             pygame.draw.rect(screen, gray, (0, self.H / 2 + self.start_pos, self.W, self.H / 2))
             pygame.draw.rect(screen, gray, (0, 0 - self.start_pos, self.W, self.H / 2))
-            self.start_pos += 12
+            self.start_pos += 40
         if self.pause and self.steps % 30 < 15:
             screen.blit(get_images.get_graphical_object_image("pause", 0, size=4), (self.W / 2 - 80, self.game_window_pos[1] + 32 * 13 + 4))
 
@@ -318,7 +318,7 @@ class World():
         }
         json.dump(data, file)
         file.close()
-        self.menu[0] = "score"
+        self.menu[0] = "main menu"
 
     def win(self):
         if self.timer == -1:

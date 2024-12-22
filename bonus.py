@@ -13,7 +13,7 @@ class Bonus(pygame.sprite.Sprite):
         o = 0
         while i:
             o += 1
-            blocks = ("ice", "tree", "air")
+            blocks = ("ice", "tree", "air", "bricks")
             pos = (random.randint(0, 24), random.randint(0, 24))
             pos2 = (pos[0] + 1, pos[1])
             pos3 = (pos[0], pos[1] + 1)

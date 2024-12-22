@@ -151,6 +151,7 @@ class Player(pygame.sprite.Sprite):
             #действия бонусов
             if bonus_sensor == 0:#щит
                 self.shield_timer = 600
+                self.shieldgroup = pygame.sprite.Group()
                 self.shieldgroup.add(GO.GraphicalObject((self.rect.x + 32, self.rect.y + 32), "shield"))
                 self.world.score += 500
                 self.world.stat[self.number == "player2"]["Score"] += 500

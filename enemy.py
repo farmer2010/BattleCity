@@ -63,6 +63,9 @@ class Enemy(pygame.sprite.Sprite):
         self.diesound = pygame.mixer.Sound("files/sounds/enemy_death.mp3")
         self.bonussound = pygame.mixer.Sound("files/sounds/bullet_hit_bonustank.mp3")
         self.armorsound = pygame.mixer.Sound("files/sounds/bullet_hit_armortank.mp3")
+        if self.have_bonus == 1:
+            for x in self.world.bonus:
+                x.kill()
 
     def shoot(self):
         if self.bullets != 0:
@@ -87,8 +90,6 @@ class Enemy(pygame.sprite.Sprite):
             if self.have_bonus == 1:
                 self.bonussound.play()
                 self.have_bonus = 0
-                for x in self.world.bonus:
-                    x.kill()
                 self.world.bonus.add(bonus.Bonus(self.world))
             self.health -= 1
             if self.health <= 0:
@@ -100,9 +101,9 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 self.armorsound.play()
         else:
-            self.world.explosions.add(GO.GraphicalObject((self.rect.x + 32, self.rect.y + 32), "score", mode=self.type))
             self.world.explosions.add(GO.GraphicalObject((self.rect.x + 32, self.rect.y + 32), "big_explosion"))
             self.world.score += (self.type + 1) * 100
+            self.diesound.play()
             self.kill()
 
     def update(self, steps, is_update):
@@ -112,9 +113,15 @@ class Enemy(pygame.sprite.Sprite):
             elif not self.have_bonus:
                 if self.type == 3:
                     if self.health == 4:
-                        color = "green"
+                        if steps % 2 == 0:
+                            color = "green"
+                        else:
+                            color = "gray"
                     elif self.health == 3:
-                        color = "yellow"
+                        if steps % 2 == 0:
+                            color = "yellow"
+                        else:
+                            color = "gray"
                     elif self.health == 2:
                         if steps % 2 == 0:
                             color = "yellow"

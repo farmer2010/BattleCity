@@ -57,11 +57,11 @@ def get_number(num, size=32):
 '''
 
 def add_symbols(symbols):
-    symbols.add(smb(30, (0, 1)))#I
-    symbols.add(smb(48, (1, 1)))#-
-    symbols.add(smb(29, (8, 1)))#H
-    symbols.add(smb(30, (9, 1)))#I
-    symbols.add(smb(48, (10, 1)))#-
+    symbols.add(smb(30, (0, 0)))#I
+    symbols.add(smb(48, (1, 0)))#-
+    symbols.add(smb(29, (9, 0)))#H
+    symbols.add(smb(30, (10, 0)))#I
+    symbols.add(smb(48, (11, 0)))#-
     symbols.add(smb(12, (2, 23)))#copyright
     symbols.add(smb(1, (4, 23)))#1
     symbols.add(smb(9, (5, 23)))#9
@@ -76,7 +76,7 @@ def add_symbols(symbols):
     symbols.add(smb(2, (15, 23)))#2
     symbols.add(smb(0, (16, 23)))#0
     symbols.add(smb(2, (17, 23)))#2
-    symbols.add(smb(4, (18, 23)))#4
+    symbols.add(smb(5, (18, 23)))#5
     symbols.add(smb(27, (20, 23)))#F
     symbols.add(smb(22, (21, 23)))#A
     symbols.add(smb(39, (22, 23)))#R
@@ -237,10 +237,14 @@ class UI():
     def draw(self, screen):
         if self.menu[0] == "main menu":
             screen.fill((0, 0, 0))
-            self.symbols.draw(screen)
+            #self.symbols.draw(screen)
             screen.blit(get_images.get_tank_image("yellow", 0, 3, self.track > 2), (6 * 32 + self.game_window_pos[0], self.selection * 64 + 14 * 32 - 16 + self.game_window_pos[1]))
-            screen.blit(get_images.get_text_image(str(self.score)), (2 * 32 + self.game_window_pos[0], 1 * 32 + self.game_window_pos[1]))
-            screen.blit(get_images.get_text_image(str(self.bestscore)), (11 * 32 + self.game_window_pos[0], 1 * 32 + self.game_window_pos[1]))
+            screen.blit(get_images.get_text_image("i- " + str(self.score)), (0 * 32 + self.game_window_pos[0], 0 * 32 + self.game_window_pos[1]))
+            screen.blit(get_images.get_text_image("hi- " + str(self.bestscore)), (9 * 32 + self.game_window_pos[0], 0 * 32 + self.game_window_pos[1]))
+            screen.blit(get_images.get_text_image("1 player"), (9 * 32 + self.game_window_pos[0], 14 * 32 + self.game_window_pos[1]))
+            screen.blit(get_images.get_text_image("2 players"), (9 * 32 + self.game_window_pos[0], 16 * 32 + self.game_window_pos[1]))
+            screen.blit(get_images.get_text_image("construction"), (9 * 32 + self.game_window_pos[0], 18 * 32 + self.game_window_pos[1]))
+            screen.blit(get_images.get_text_image("@ 1980 namco,2025 farmer_2010"), (4 * 32 + self.game_window_pos[0], 23 * 32 + self.game_window_pos[1]))
             screen.blit(self.logo, (1 * 32 + self.game_window_pos[0], 3 * 32 + self.game_window_pos[1]))
         elif self.menu[0] == "select level":
             screen.fill((99, 99, 99))

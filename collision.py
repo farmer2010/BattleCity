@@ -2,49 +2,6 @@
 import pygame
 pygame.init()
 
-def change_string(string, elem, number_elem):
-    string = string[:number_elem] + str(elem) + string[number_elem + 1:]
-    return(string)
-
-def break_brick(damage, rotate):
-    """
-    damage = "
-        1(0, 0)#0
-        1(1, 0)#1
-        1(0, 1)#2
-        1(1, 1)#3
-        "
-    """
-    if rotate == 0:
-        if damage[2] == "0" and damage[3] == "0":
-            damage = change_string(damage, 0, 0)
-            damage = change_string(damage, 0, 1)
-        else:
-            damage = change_string(damage, 0, 2)
-            damage = change_string(damage, 0, 3)
-    elif rotate == 1:
-        if damage[1] == "0" and damage[3] == "0":
-            damage = change_string(damage, 0, 0)
-            damage = change_string(damage, 0, 2)
-        else:
-            damage = change_string(damage, 0, 1)
-            damage = change_string(damage, 0, 3)
-    elif rotate == 2:
-        if damage[0] == "0" and damage[1] == "0":
-            damage = change_string(damage, 0, 2)
-            damage = change_string(damage, 0, 3)
-        else:
-            damage = change_string(damage, 0, 0)
-            damage = change_string(damage, 0, 1)
-    elif rotate == 3:
-        if damage[0] == "0" and damage[2] == "0":
-            damage = change_string(damage, 0, 1)
-            damage = change_string(damage, 0, 3)
-        else:
-            damage = change_string(damage, 0, 0)
-            damage = change_string(damage, 0, 2)
-    return(damage)
-
 def border_collision(sprite):
     if sprite.rect.x > sprite.world.game_window_pos2[0] - sprite.image.get_width():
         return(True)
@@ -54,6 +11,7 @@ def border_collision(sprite):
         return(True)
     elif sprite.rect.y < sprite.world.game_window_pos[1]:
         return(True)
+    return(False)
 
 def block_collision(sprite, detectors=("cement", "water", "brick", "base")):
     for x in range(26):
@@ -72,7 +30,7 @@ def enemy_collision(sprite):
 def player_collision(sprite):
     for s in sprite.world.players:
         if pygame.sprite.collide_rect(s, sprite) and sprite.number != s.number:
-            return([True, s.number])
+            return([True, s])
     return([False, None])
 
 def collision_for_player(sprite):
@@ -111,61 +69,41 @@ def collision_for_enemy(sprite):
 
 def collision_for_bullet(sprite):
     ret = False
-    killed = None
+    obj = None
+    bl = []
     #проверка столкновения с границей
-    if border_collision(sprite):
-        ret = True
+    if border_collision(sprite): ret = True
     #проверка столкновения с блоками
     for x in range(26):
         for y in range(26):
-            if sprite.world.field[x][y].type == "cement":
-                if pygame.sprite.collide_rect(sprite.world.field[x][y], sprite):
+            if sprite.world.field[x][y].type == "brick" or sprite.world.field[x][y].type == "base" or sprite.world.field[x][y].type == "cement":
+                if pygame.sprite.collide_rect(sprite, sprite.world.field[x][y]):
                     ret = True
-                    if sprite.have_break_cement:
-                        sprite.world.field[x][y].type = "air"
-                        sprite.world.field[x][y].change_image()
-            elif sprite.world.field[x][y].type == "brick":
-                if pygame.sprite.collide_rect(sprite.world.field[x][y], sprite):#уничтожение кирпичного блока
-                    block_damage = sprite.world.field[x][y].damage
-                    block_damage = break_brick(block_damage, sprite.rotate)
-                    sprite.world.field[x][y].damage = block_damage
-                    sprite.world.field[x][y].change_image()
-                    sprite.world.field[x][y].update()
-                    ret = True
-            elif sprite.world.field[x][y].type == "base":
-                if pygame.sprite.collide_rect(sprite.world.field[x][y], sprite):
-                    sound = pygame.mixer.Sound("files/sounds/player_death.mp3")
-                    sound.play()
-                    sprite.world.field[x][y].is_break = 1
-                    sprite.world.field[x][y].change_image()
-                    sprite.world.field[x][y].update()
-                    ret = True
+                    bl.append(sprite.world.field[x][y])
     if "player" in sprite.number:#если пулю выпустил игрок
-        #проверка столкновений врагами
+        #проверка столкновений с врагами
         for e in sprite.world.enemies:
             if pygame.sprite.collide_rect(e, sprite):
                 ret = True
-                killed = e.number
+                obj = e
                 break
+        #проверка столкновений с другим игроком
         for s in sprite.world.players:
             if pygame.sprite.collide_rect(s, sprite) and sprite.number != s.number:
                 ret = True
+        #проверка столкновения с пулями
         for b in sprite.world.bullets:
-            if b.number != sprite.number:
-                if pygame.sprite.collide_rect(b, sprite):
-                    ret = True
-                    b.kill()
-                    for f in sprite.world.players:
-                        if f.number == b.number:
-                            f.bullets += 1
+            if pygame.sprite.collide_rect(b, sprite) and b.number != sprite.number:
+                ret = True
+                obj = b
+                break
     else:#если пулю выпустил не игрок
         #проверка столкновения с игроком
         a = player_collision(sprite)
         if a[0]:
             ret = True
-            killed = a[1]
-            #print(killed)
-    return([ret, killed])
+            obj = a[1]
+    return([ret, obj, bl])
 
 def bonus_collision(sprite, bonus_list):
     for i in bonus_list:

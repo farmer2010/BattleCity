@@ -16,27 +16,26 @@ class GraphicalObject(pygame.sprite.Sprite):
         self.rect.centerx = pos[0]
         self.rect.centery = pos[1]
         #print(self.pos, self.type)
-        self.time = 120
+        self.time = 50
         self.display_size = display_size
         if sftype == "game over":
             self.image = get_images.get_graphical_object_image(sftype, 0, 4)
 
     def update(self, steps, newpos=(1000, 300)):
         if "explosion" in self.type:
-            if self.index > 4:
-                i = 4
-            else:
-                i = self.index
             if self.type == "big_explosion" and self.index >= 3:
-                self.image = get_images.get_graphical_object_image("big_explosion", i - 3)
+                if self.index <= 4:
+                    self.image = get_images.get_graphical_object_image("big_explosion", self.index - 3)
+                else:
+                    self.image = get_images.get_graphical_object_image("explosion", abs(self.index - 7))
             else:
-                self.image = get_images.get_graphical_object_image("explosion", i)
+                self.image = get_images.get_graphical_object_image("explosion", self.index)
             self.rect = self.image.get_rect()
             self.rect.centerx = self.pos[0]
             self.rect.centery = self.pos[1]
             if not steps % 5:
                 self.index += 1
-            if self.index >= 4 and self.type == "big_explosion":
+            if self.index >= 8 and self.type == "big_explosion":
                 self.kill()
             elif self.index > 2 and self.type == "explosion":
                 self.kill()
