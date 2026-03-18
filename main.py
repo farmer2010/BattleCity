@@ -32,8 +32,6 @@ minutes = 0
 hours = 0
 timer2 = 0
 game_world = None
-pl1 = None
-pl2 = None
 diesound = pygame.mixer.Sound("files/sounds/enemy_death.mp3")
 
 while keep_going:
@@ -45,8 +43,6 @@ while keep_going:
         if event.type == pygame.QUIT:#проверка выхода
             keep_going = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:#-|-
-                keep_going = False
             if event.key == pygame.K_F1:
                 F1 = True
             else:
@@ -65,11 +61,6 @@ while keep_going:
             user_interface = ui.UI(menu)
         elif menu == ["game"]:
             game_world = user_interface.get_world()
-            for p in game_world.players:
-                if p.number == "player":
-                    pl1 = p
-                else:
-                    pl2 = p
     if menu == ["game"]:#игра
         game_world.update(events)
         game_world.draw(screen2)
@@ -115,23 +106,38 @@ while keep_going:
             screen.blit(font.render("Bullets: " + str(c_bullets), False, (0, 0, 255)), (0, 200))
             screen.blit(font.render("Graphical objects: " + str(c_go), False, (0, 0, 255)), (0, 225))
             screen.blit(font.render("Bonus: " + str(c_bonus), False, (0, 0, 255)), (0, 250))
-
+            #
             screen.blit(font.render("Freeze timer: " + str(game_world.clock), False, (127, 168, 255)), (0, 275))
             screen.blit(font.render("Base reset timer: " + str(game_world.base_timer), False, (127, 168, 255)), (0, 300))
-            screen.blit(font.render("Enemies respawn time: " + str(game_world.time_wait), False, (127, 168, 255)), (0, 325))
-
-            screen.blit(font.render("Player I pos: (" + str(pl1.rect.x) + ", " + str(pl1.rect.y) + ")", False, (255, 128, 0)), (0, 350))
-            screen.blit(font.render("Player I rotate: " + str(pl1.rotate), False, (255, 128, 0)), (0, 375))
-            screen.blit(font.render("Player I bullets: " + str(pl1.bullets), False, (255, 128, 0)), (0, 400))
-            screen.blit(font.render("Player I upgrade: " + str(pl1.upgrade), False, (255, 128, 0)), (0, 425))
-            screen.blit(font.render("Player I shield timer: " + str(pl1.shield_timer) + ", shield: " + str(pl1.shield), False, (255, 128, 0)), (0, 450))
-
-            if game_world.count_of_players == 2:
-                screen.blit(font.render("Player II pos: (" + str(pl2.rect.x) + ", " + str(pl2.rect.y) + ")", False, (90, 0, 255)), (0, 475))
-                screen.blit(font.render("Player II rotate: " + str(pl2.rotate), False, (90, 0, 255)), (0, 500))
-                screen.blit(font.render("Player II bullets: " + str(pl2.bullets), False, (90, 0, 255)), (0, 525))
-                screen.blit(font.render("Player II upgrade: " + str(pl2.upgrade), False, (90, 0, 255)), (0, 550))
-                screen.blit(font.render("Player II shield timer: " + str(pl2.shield_timer) + ", shield: " + str(pl2.shield), False, (90, 0, 255)), (0, 575))
+            screen.blit(font.render("Enemies respawn time: " + str(game_world.time_wait) + ", " + str(round(game_world.time_wait / 60, 2)) + " seconds", False, (127, 168, 255)), (0, 325))
+            if game_world.steps < game_world.time_wait * 8:
+                screen.blit(font.render("Enemies move stage: random", False, (127, 168, 255)), (0, 350))
+            elif game_world.steps < game_world.time_wait * 16:
+                screen.blit(font.render("Enemies move stage: to player", False, (127, 168, 255)), (0, 350))
+            else:
+                screen.blit(font.render("Enemies move stage: to base", False, (127, 168, 255)), (0, 350))
+            #
+            pl1 = None
+            pl2 = None
+            for p in game_world.players:
+                if p.number == "player":
+                    pl1 = p
+                else:
+                    pl2 = p
+            #
+            if pl1 != None:
+                screen.blit(font.render("Player I pos: (" + str(pl1.rect.x) + ", " + str(pl1.rect.y) + ")", False, (255, 128, 0)), (0, 375))
+                screen.blit(font.render("Player I rotate: " + str(pl1.rotate), False, (255, 128, 0)), (0, 400))
+                screen.blit(font.render("Player I bullets: " + str(pl1.bullets), False, (255, 128, 0)), (0, 425))
+                screen.blit(font.render("Player I upgrade: " + str(pl1.upgrade), False, (255, 128, 0)), (0, 450))
+                screen.blit(font.render("Player I shield timer: " + str(pl1.shield_timer) + ", shield: " + str(pl1.shield), False, (255, 128, 0)), (0, 475))
+            #
+            if game_world.count_of_players == 2 and pl2 != None:
+                screen.blit(font.render("Player II pos: (" + str(pl2.rect.x) + ", " + str(pl2.rect.y) + ")", False, (90, 0, 255)), (0, 500))
+                screen.blit(font.render("Player II rotate: " + str(pl2.rotate), False, (90, 0, 255)), (0, 525))
+                screen.blit(font.render("Player II bullets: " + str(pl2.bullets), False, (90, 0, 255)), (0, 550))
+                screen.blit(font.render("Player II upgrade: " + str(pl2.upgrade), False, (90, 0, 255)), (0, 575))
+                screen.blit(font.render("Player II shield timer: " + str(pl2.shield_timer) + ", shield: " + str(pl2.shield), False, (90, 0, 255)), (0, 600))
     if timer2 >= fps:
         timer2 = 0
         seconds += 1

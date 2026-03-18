@@ -8,15 +8,17 @@ class GraphicalObject(pygame.sprite.Sprite):
         self.index = mode
         self.pos = pos
         self.type = sftype
-        if self.type != "game over":
-            self.image = get_images.get_graphical_object_image(self.type, self.index)
-        else:
+        if self.type == "game over":
             self.image = get_images.get_graphical_object_image("game over", 0, size=4)
+        elif self.type == "score":
+            self.image = pygame.Surface((64, 64), pygame.SRCALPHA)
+            self.image.fill((0, 0, 0, 0))
+        else:
+            self.image = get_images.get_graphical_object_image(self.type, self.index)
         self.rect = self.image.get_rect()
         self.rect.centerx = pos[0]
         self.rect.centery = pos[1]
-        #print(self.pos, self.type)
-        self.time = 50
+        self.time = 40
         self.display_size = display_size
         if sftype == "game over":
             self.image = get_images.get_graphical_object_image(sftype, 0, 4)
@@ -33,7 +35,7 @@ class GraphicalObject(pygame.sprite.Sprite):
             self.rect = self.image.get_rect()
             self.rect.centerx = self.pos[0]
             self.rect.centery = self.pos[1]
-            if not steps % 5:
+            if steps % 3 == 0:
                 self.index += 1
             if self.index >= 8 and self.type == "big_explosion":
                 self.kill()
@@ -49,6 +51,8 @@ class GraphicalObject(pygame.sprite.Sprite):
             self.rect.centery = self.pos[1]
         elif self.type == "score":
             self.time -= 1
+            if self.time < 30:
+                self.image = get_images.get_graphical_object_image("score", self.index)
             if self.time <= 0:
                 self.kill()
         elif self.type == "game over":

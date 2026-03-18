@@ -23,7 +23,7 @@ def block_collision(sprite, detectors=("cement", "water", "brick", "base")):
 
 def enemy_collision(sprite):
     for d in sprite.world.enemies:#проверка столкновений с врагами
-        if pygame.sprite.collide_rect(d, sprite):
+        if pygame.sprite.collide_rect(d, sprite) and d.timer > 80:
             return(True)
     return(False)
 
@@ -60,7 +60,7 @@ def collision_for_enemy(sprite):
         tank_ret = True
     #проверка столкновения с другими врагами
     for d in sprite.world.enemies:
-        if pygame.sprite.collide_rect(d, sprite) and d.number != sprite.number:
+        if pygame.sprite.collide_rect(d, sprite) and d.number != sprite.number and d.timer > 80:
             tank_ret = True
     #проверка столкновения с блоками
     if block_collision(sprite):
@@ -76,14 +76,14 @@ def collision_for_bullet(sprite):
     #проверка столкновения с блоками
     for x in range(26):
         for y in range(26):
-            if sprite.world.field[x][y].type == "brick" or sprite.world.field[x][y].type == "base" or sprite.world.field[x][y].type == "cement":
+            if sprite.world.field[x][y].type == "brick" or (sprite.world.field[x][y].type == "base" and sprite.world.field[x][y].is_break == 0) or sprite.world.field[x][y].type == "cement":
                 if pygame.sprite.collide_rect(sprite, sprite.world.field[x][y]):
                     ret = True
                     bl.append(sprite.world.field[x][y])
     if "player" in sprite.number:#если пулю выпустил игрок
         #проверка столкновений с врагами
         for e in sprite.world.enemies:
-            if pygame.sprite.collide_rect(e, sprite):
+            if pygame.sprite.collide_rect(e, sprite) and e.timer > 80:
                 ret = True
                 obj = e
                 break

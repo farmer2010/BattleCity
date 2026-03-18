@@ -54,6 +54,9 @@ class Player(pygame.sprite.Sprite):
         self.channel = self.movesound.play(loops=9000)
         self.channel.pause()
         self.diesound = pygame.mixer.Sound("files/sounds/player_death.mp3")
+        self.bonus_sound = pygame.mixer.Sound("files/sounds/player_bonus.mp3")
+        self.bullet_restart_timer = 0
+        self.sensor = sensor.Sensor((self.rect.x, self.rect.y), self.number, self.world)
 
     def shoot(self):
         self.shoot_tag = 1
@@ -81,7 +84,7 @@ class Player(pygame.sprite.Sprite):
                 self.shieldgroup = pygame.sprite.Group()
             if self.shield_timer > 0:
                 self.shield = 1
-                self.shield_timer -= 0
+                self.shield_timer -= 1
             #обновить текстуру
             self.image = get_images.get_tank_image(self.color, self.upgrade, self.rotate, self.track)
             #настройка координат сенсора
@@ -111,19 +114,19 @@ class Player(pygame.sprite.Sprite):
                     right = keys[pygame.K_RIGHT]
                     space = keys[pygame.K_RSHIFT]
             #смена направления
-            if up and (not down) and (not left) and (not right):
+            if up and not down:
                 self.rotate = 0
                 self.rect.x = round((fx + 32) / 32) * 32 + self.world.game_window_pos[0] - 32
                 self.channel.unpause()
-            elif down and (not up) and (not left) and (not right):
+            elif down:
                 self.rotate = 2
                 self.rect.x = round((fx + 32) / 32) * 32 + self.world.game_window_pos[0] - 32
                 self.channel.unpause()
-            elif left and (not up) and (not down) and (not right):
+            elif left and not right:
                 self.rotate = 1
                 self.rect.y = round((fy + 32) / 32) * 32 + self.world.game_window_pos[1] - 32
                 self.channel.unpause()
-            elif right and (not up) and (not down) and (not left):
+            elif right:
                 self.rotate = 3
                 self.rect.y = round((fy + 32) / 32) * 32 + self.world.game_window_pos[1] - 32
                 self.channel.unpause()
@@ -144,10 +147,11 @@ class Player(pygame.sprite.Sprite):
                 sens_y = fy
             sens_x += self.world.game_window_pos[0]
             sens_y += self.world.game_window_pos[1]
-            my_sensor = sensor.Sensor((sens_x, sens_y), self.number, self.world)#настройка сенсора
-            collide = collision(my_sensor, self.number)#основной коллайдер
-            ice_sensor = collision(my_sensor, "ice")#столкновения со льдом
-            bonus_sensor = collision(my_sensor, "bonus")#столкновения с бонусами
+            self.sensor.rect.x = sens_x#настройка сенсора
+            self.sensor.rect.y = sens_y
+            collide = collision(self.sensor, self.number)#основной коллайдер
+            ice_sensor = collision(self.sensor, "ice")#столкновения со льдом
+            bonus_sensor = collision(self, "bonus")#столкновения с бонусами
             #действия бонусов
             if bonus_sensor == 0:#щит
                 self.shield_timer = 600
@@ -179,6 +183,9 @@ class Player(pygame.sprite.Sprite):
                 self.world.player_health[self.number] += 1
                 self.world.score += 500
                 self.world.stat[self.number == "player2"]["Score"] += 500
+            if bonus_sensor != None:
+                self.bonus_sound.play()
+            #
             if not ice_sensor:
                 self.timer_ice = 0
             if (up or down or left or right) and steps % 4 != 0 and not collide:#движение (каждые 3 из 4 кадров)
@@ -196,7 +203,10 @@ class Player(pygame.sprite.Sprite):
                 self.timer_ice += 1
             if self.timer_ice >= 28:
                 self.timer_ice = 0
-            if space and self.bullets and not self.shoot_tag:#стрелять (если нажат пробел и у танка хватает пуль)
+            #
+            if self.bullet_restart_timer > 0:
+                self.bullet_restart_timer -= 1
+            if space and self.bullets and not self.shoot_tag and self.bullet_restart_timer == 0:#стрелять (если нажат пробел и у танка хватает пуль)
                 self.shoot()
             if not space:
                 self.shoot_tag = 0
@@ -216,6 +226,7 @@ class Player(pygame.sprite.Sprite):
                 self.shield_timer = 180
 
     def die(self):
+        self.channel.pause()
         self.diesound.play()
         for b in self.world.bullets:
             if b.number == "player":

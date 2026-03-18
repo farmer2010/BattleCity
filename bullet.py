@@ -1,7 +1,7 @@
 import graphical_object as GO
 import pygame
 import get_images
-from collision import collision
+from collision import *
 pygame.init()
 
 def change_string(string, elem, number_elem):
@@ -74,6 +74,7 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y += self.world.movelist[self.rotate][1] * self.speed
         collide_list = collision(self, "bullet")
         collide = collide_list[0]
+        sou = 0
         if collide:
             if collide_list[2] != []:#уничтожение блоков
                 for b in collide_list[2]:
@@ -82,16 +83,13 @@ class Bullet(pygame.sprite.Sprite):
                             b.type = "air"
                             b.change_image()
                             if "player" in self.number:
-                                sound = pygame.mixer.Sound("files/sounds/bullet_hit_bricks.mp3")
-                                sound.play()
+                                sou = 2
                         else:
                             if "player" in self.number:
-                                sound = pygame.mixer.Sound("files/sounds/bullet_hit_cement.mp3")
-                                sound.play()
+                                sou = 1
                     elif b.type == "brick":
                         if "player" in self.number:
-                            sound = pygame.mixer.Sound("files/sounds/bullet_hit_bricks.mp3")
-                            sound.play()
+                            sou = 2
                         if self.have_break_cement:
                             b.type = "air"
                             b.change_image()
@@ -101,7 +99,7 @@ class Bullet(pygame.sprite.Sprite):
                             b.damage = block_damage
                             b.change_image()
                             b.update()
-                    elif b.type == "base":
+                    elif b.type == "base" and b.is_break == 0:
                         sound = pygame.mixer.Sound("files/sounds/player_death.mp3")
                         sound.play()
                         b.is_break = 1
@@ -120,12 +118,27 @@ class Bullet(pygame.sprite.Sprite):
                 for p in self.world.players:
                     if self.ret and p.number == self.number:
                         p.bullets += 1
+                        if str(type(collide_list[1])) != "<class 'bullet.Bullet'>":
+                            p.bullet_restart_timer = 9
                 if str(type(collide_list[1])) == "<class 'enemy.Enemy'>":
                     for e in self.world.enemies:
                         if e.number == collide_list[1].number:
                             e.die()
-                            self.world.stat[self.number == "player2"]["Enemies"][e.type] += 1
-                            self.world.stat[self.number == "player2"]["Score"] += (e.type + 1) * 100
+                            if e.health == 0:
+                                self.world.stat[self.number == "player2"]["Enemies"][e.type] += 1
+                                self.world.stat[self.number == "player2"]["Score"] += (e.type + 1) * 100
+                if str(type(collide_list[1])) == "<class 'bullet.Bullet'>":
+                    for e in self.world.enemies:
+                        if e.number == collide_list[1].number:
+                            e.bullets += 1
+                    collide_list[1].kill()
             if str(type(collide_list[1])) != "<class 'bullet.Bullet'>":
                 self.world.explosions.add(GO.GraphicalObject((self.rect.x + 10, self.rect.y + 10), "explosion"))
             self.kill()
+        #
+        if (border_collision(self) and "player" in self.number) or sou == 1:
+            sound = pygame.mixer.Sound("files/sounds/bullet_hit_cement.mp3")
+            sound.play()
+        if sou == 2:
+            sound = pygame.mixer.Sound("files/sounds/bullet_hit_bricks.mp3")
+            sound.play()

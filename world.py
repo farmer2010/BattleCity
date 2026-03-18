@@ -77,6 +77,8 @@ class World():
         self.channel.pause()
         self.gameoversound = pygame.mixer.Sound("files/sounds/level_end_gameover.mp3")
         self.pause = False
+        self.hitboxes = False
+        self.select_block = "cement"
 
     def update(self, events):
         if not self.pause:#обновление всего
@@ -137,25 +139,34 @@ class World():
                 ]
                 mouse_collision = mousepos[0] > gwp2[0] or mousepos[0] < gwp[0] or mousepos[1] > gwp2[1] or mousepos[1] < gwp[1]
                 mousedown = pygame.mouse.get_pressed()[0]
-                if not mousedown:
-                    self.mousetag = False
-                if mousedown and (not mouse_collision) and (not self.mousetag):
-                    self.setblock()
-                    self.mousetag = True
+                if not mouse_collision:
+                    if mousedown:
+                        self.setblock()
+                    elif pygame.mouse.get_pressed()[2]:
+                        self.removeblock()
         #------------проверка выхода, пауза, звуки------------
         self.steps += 1
         RET = False
         TAB = False
+        F2 = False
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     RET = True
-                else:
-                    RET = False
                 if event.key == pygame.K_TAB:
                     TAB = True
-                else:
-                    TAB = False
+                if event.key == pygame.K_F2:
+                    F2 = True
+                if event.key == pygame.K_1:
+                    self.select_block = "cement"
+                if event.key == pygame.K_2:
+                    self.select_block = "trees"
+                if event.key == pygame.K_3:
+                    self.select_block = "water"
+                if event.key == pygame.K_4:
+                    self.select_block = "brick"
+                if event.key == pygame.K_5:
+                    self.select_block = "ice"
                     
         if TAB:
             self.stop_sounds()
@@ -168,27 +179,8 @@ class World():
             else:
                 self.pause = 0
                 self.channel2.unpause()
-
-    def stop_sounds(self):
-        self.channel.pause()
-        if self.type != "constructor":
-            self.channel2.pause()
-        for p in self.players:
-            p.channel.pause()
-
-    def get_data(self):
-        hisc = self.bestscore
-        if self.score > self.bestscore:
-            hisc = self.score
-        a = {
-            "HiScore" : hisc,
-            "Stage" : self.levelnumber,
-            "Player1" : {
-                "Enemies" : self.stat[0]["Enemies"],
-                "Score" : self.stat[0]["Score"]
-            }
-        }
-        return(a)
+        if F2:
+            self.hitboxes = not self.hitboxes
 
     def draw(self, screen):
         screen.fill(gray)
@@ -205,7 +197,40 @@ class World():
             for y in range(26):
                 if self.field[x][y].type == "trees":
                     self.field[x][y].draw(screen)
-        if (self.steps // 10) % 2:
+        #
+        if self.hitboxes:#отображение хитбоксов
+            for e in self.enemies:
+                pygame.draw.rect(screen, (0, 128, 255), (e.sensor.rect.x, e.sensor.rect.y, 64, 2))
+                pygame.draw.rect(screen, (0, 128, 255), (e.sensor.rect.x, e.sensor.rect.y, 2, 64))
+                pygame.draw.rect(screen, (0, 128, 255), (e.sensor.rect.x + 62, e.sensor.rect.y, 2, 64))
+                pygame.draw.rect(screen, (0, 128, 255), (e.sensor.rect.x, e.sensor.rect.y + 62, 64, 2))
+                #
+                pygame.draw.rect(screen, (255, 0, 0), (e.rect.x, e.rect.y, 64, 2))
+                pygame.draw.rect(screen, (255, 0, 0), (e.rect.x, e.rect.y, 2, 64))
+                pygame.draw.rect(screen, (255, 0, 0), (e.rect.x + 62, e.rect.y, 2, 64))
+                pygame.draw.rect(screen, (255, 0, 0), (e.rect.x, e.rect.y + 62, 64, 2))
+            for p in self.players:
+                pygame.draw.rect(screen, (0, 128, 255), (p.sensor.rect.x, p.sensor.rect.y, 64, 2))
+                pygame.draw.rect(screen, (0, 128, 255), (p.sensor.rect.x, p.sensor.rect.y, 2, 64))
+                pygame.draw.rect(screen, (0, 128, 255), (p.sensor.rect.x + 62, p.sensor.rect.y, 2, 64))
+                pygame.draw.rect(screen, (0, 128, 255), (p.sensor.rect.x, p.sensor.rect.y + 62, 64, 2))
+                #
+                pygame.draw.rect(screen, (0, 255, 0), (p.rect.x, p.rect.y, 64, 2))
+                pygame.draw.rect(screen, (0, 255, 0), (p.rect.x, p.rect.y, 2, 64))
+                pygame.draw.rect(screen, (0, 255, 0), (p.rect.x + 62, p.rect.y, 2, 64))
+                pygame.draw.rect(screen, (0, 255, 0), (p.rect.x, p.rect.y + 62, 64, 2))
+            for b in self.bullets:
+                pygame.draw.rect(screen, (0, 0, 255), (b.rect.x, b.rect.y, 20, 2))
+                pygame.draw.rect(screen, (0, 0, 255), (b.rect.x, b.rect.y, 2, 20))
+                pygame.draw.rect(screen, (0, 0, 255), (b.rect.x + 18, b.rect.y, 2, 20))
+                pygame.draw.rect(screen, (0, 0, 255), (b.rect.x, b.rect.y + 18, 20, 2))
+            for b in self.bonus:
+                pygame.draw.rect(screen, (255, 255, 0), (b.rect.x, b.rect.y, 64, 2))
+                pygame.draw.rect(screen, (255, 255, 0), (b.rect.x, b.rect.y, 2, 64))
+                pygame.draw.rect(screen, (255, 255, 0), (b.rect.x + 62, b.rect.y, 2, 64))
+                pygame.draw.rect(screen, (255, 255, 0), (b.rect.x, b.rect.y + 62, 64, 2))
+        #
+        if self.steps % 20 > 10:
             self.bonus.draw(screen)
         self.explosions.draw(screen)
         if self.type != "constructor":
@@ -281,20 +306,73 @@ class World():
             blockpos[0] = 25
         if blockpos[1] > 25:
             blockpos[1]  = 25
-        if self.field[blockpos[0]][blockpos[1]].type == "air":
-            self.field[blockpos[0]][blockpos[1]].type = "cement"
-        elif self.field[blockpos[0]][blockpos[1]].type == "cement":
-            self.field[blockpos[0]][blockpos[1]].type = "trees"
-        elif self.field[blockpos[0]][blockpos[1]].type == "trees":
-            self.field[blockpos[0]][blockpos[1]].type = "water"
-        elif self.field[blockpos[0]][blockpos[1]].type == "water":
-            self.field[blockpos[0]][blockpos[1]].type = "brick"
+        self.field[blockpos[0]][blockpos[1]].type = self.select_block
+        if self.select_block == "brick":
             self.field[blockpos[0]][blockpos[1]].damage = "1111"
-        elif self.field[blockpos[0]][blockpos[1]].type == "brick":
-            self.field[blockpos[0]][blockpos[1]].type = "ice"
-        elif self.field[blockpos[0]][blockpos[1]].type == "ice":
-            self.field[blockpos[0]][blockpos[1]].type = "air"
         self.field[blockpos[0]][blockpos[1]].change_image()
+
+    def removeblock(self):
+        mousepos = pygame.mouse.get_pos()
+        W = pygame.display.Info().current_w
+        H = pygame.display.Info().current_h
+        wh = H * (832 / 1080) / 2
+        gwp = [
+            W / 2 - wh,
+            H / 2 - wh
+        ]
+        gwp2 = [
+            W / 2 + wh,
+            H / 2 + wh
+        ]
+        blockpos = [
+            int((mousepos[0] - gwp[0]) // ((gwp2[0] - gwp[0]) / 26)),
+            int((mousepos[1] - gwp[1]) // ((gwp2[1] - gwp[1]) / 26))
+        ]
+        if blockpos[0] > 25:
+            blockpos[0] = 25
+        if blockpos[1] > 25:
+            blockpos[1]  = 25
+        self.field[blockpos[0]][blockpos[1]].type = "air"
+        self.field[blockpos[0]][blockpos[1]].change_image()
+
+    def stop_sounds(self):
+        self.channel.pause()
+        if self.type != "constructor":
+            self.channel2.pause()
+        for p in self.players:
+            p.channel.pause()
+
+    def get_data(self):
+        hisc = self.bestscore
+        if self.score > self.bestscore:
+            hisc = self.score
+        t = self.levelnumber + 1
+        if self.tag == "game_over":
+            t = self.levelnumber
+        a = {
+            "HiScore" : hisc,
+            "Stage" : self.levelnumber,
+            "Player1" : {
+                "Enemies" : self.stat[0]["Enemies"],
+                "Score" : self.stat[0]["Score"]
+            },
+            "NextLevel" : t
+        }
+        if self.count_of_players == 2:
+            a = {
+            "HiScore" : hisc,
+            "Stage" : self.levelnumber,
+            "Player1" : {
+                "Enemies" : self.stat[0]["Enemies"],
+                "Score" : self.stat[0]["Score"]
+            },
+            "Player2" : {
+                "Enemies" : self.stat[1]["Enemies"],
+                "Score" : self.stat[1]["Score"]
+            },
+            "NextLevel" : t
+        }
+        return(a)
 
     def game_over(self):
         if self.timer == -1:
@@ -305,6 +383,10 @@ class World():
 
     def game_over2(self):
         self.stop_sounds()
+        file = open("files/player_data.json", "r")
+        last_max_level = json.load(file)["MaxLevel"]
+        file.close()
+        #
         file = open("files/player_data.json", "w")
         best = self.bestscore
         if self.score > self.bestscore:
@@ -314,11 +396,12 @@ class World():
             "Upgrade" : 0,
             "BestScore" : best,
             "Score" : 0,
-            "MaxLevel" : 0
+            "MaxLevel" : last_max_level,
+            
         }
         json.dump(data, file)
         file.close()
-        self.menu[0] = "main menu"
+        self.menu[0] = "score"
 
     def win(self):
         if self.timer == -1:
@@ -354,7 +437,7 @@ class World():
 
     def close_level(self):
         if self.type == "constructor":
-            self.save_level("level13")
+            self.save_level("level0")
         self.menu[0] = "main menu"
 
     def kill_all(self):
@@ -430,7 +513,7 @@ class World():
                             {"X" : 13, "Y" : 24, "To" : {"BlockType" : 6, "BaseType" : "10"}},
                             {"X" : 12, "Y" : 25, "To" : {"BlockType" : 6, "BaseType" : "01"}},
                             {"X" : 13, "Y" : 25, "To" : {"BlockType" : 6, "BaseType" : "11"}},
-                            {"X" : 11, "Y" : 25, "To" : {"BlockType" : 5}},
+                            {"X" : 11, "Y" : 25, "To" : {"BlockType" : 5}},#5
                             {"X" : 11, "Y" : 24, "To" : {"BlockType" : 5}},
                             {"X" : 11, "Y" : 23, "To" : {"BlockType" : 5}},
                             {"X" : 12, "Y" : 23, "To" : {"BlockType" : 5}},
@@ -458,7 +541,7 @@ class World():
                             {"X" : 15, "Y" : 23, "To" : {"BlockType" : 0}},
                             {"X" : 15, "Y" : 24, "To" : {"BlockType" : 0}},
                             {"X" : 15, "Y" : 25, "To" : {"BlockType" : 0}},
-                            ]
+        ]
         reset_blocks = [
             {"X" : 11, "Y" : 25, "res1" : {"BlockType" : 4}, "res2" : {"BlockType" : 5}},
             {"X" : 11, "Y" : 24, "res1" : {"BlockType" : 4}, "res2" : {"BlockType" : 5}},
@@ -468,7 +551,7 @@ class World():
             {"X" : 14, "Y" : 23, "res1" : {"BlockType" : 4}, "res2" : {"BlockType" : 5}},
             {"X" : 14, "Y" : 24, "res1" : {"BlockType" : 4}, "res2" : {"BlockType" : 5}},
             {"X" : 14, "Y" : 25, "res1" : {"BlockType" : 4}, "res2" : {"BlockType" : 5}},
-            ]
+        ]
         level["Blocks"] = blocks
         level["RemovedBlocks"] = removed_blocks
         level["ResetBlocks"] = reset_blocks

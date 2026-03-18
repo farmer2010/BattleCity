@@ -18,20 +18,6 @@ def many_floor(number):
         rnumber += 1
     return(rnumber)
 
-def change_rotate(stage):#сменить направление на случайное
-    if stage == 0:
-        return(r.randint(0, 3))
-
-def cmd_change_rotate(rotate):#повернуть
-    if r.randint(0, 1):#с шансом 1/2 сменить направление на случайное
-        return(change_rotate(0))
-    else:#иначе
-        if r.randint(0, 1):#с шансом 1/2 повернуть по часовой стрелке
-            rotate += 1
-        else:#иначе повернуть против часовой стрелки
-            rotate -= 1
-        return(rotate % 4)
-
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, pos, rotate, number, game_world, tanktype=0, have_bonus=0):
         pygame.sprite.Sprite.__init__(self)
@@ -66,6 +52,7 @@ class Enemy(pygame.sprite.Sprite):
         if self.have_bonus == 1:
             for x in self.world.bonus:
                 x.kill()
+        self.sensor = sensor.Sensor((self.rect.x, self.rect.y), self.number, self.world)
 
     def shoot(self):
         if self.bullets != 0:
@@ -133,19 +120,18 @@ class Enemy(pygame.sprite.Sprite):
                     color = "gray"
             else:
                 color = "gray"
-            self.image = get_images.get_tank_image(color, 4 + self.type, self.rotate, self.track)
-
+            self.image = get_images.get_tank_image(color, 4 + self.type, self.rotate, self.track) 
+            #
             if not is_update:
                 W = self.world.W
                 H = self.world.H
                 world_scale = 832
                 collide = False
+                #настройка сенсора
                 fx = self.rect.x - self.world.game_window_pos[0]
                 fy = self.rect.y - self.world.game_window_pos[1]
-                sens_x = 0
-                sens_y = 0
-
-                #настройка сенсора
+                sens_x = self.rect.x
+                sens_y = self.rect.y
                 if self.rotate == 0:
                     sens_x = fx
                     sens_y = fy - f(-fy)
@@ -160,9 +146,10 @@ class Enemy(pygame.sprite.Sprite):
                     sens_y = fy
                 sens_x += self.world.game_window_pos[0]
                 sens_y += self.world.game_window_pos[1]
-                my_sensor = sensor.Sensor((sens_x, sens_y), self.number, self.world)
-                collidelist = collision(my_sensor, "enemy")
-                
+                self.sensor.rect.x = sens_x#настройка сенсора
+                self.sensor.rect.y = sens_y
+                collidelist = collision(self.sensor, "enemy")
+                #
                 if self.invisible:
                     collide = collidelist[0]
                 else:
@@ -183,13 +170,13 @@ class Enemy(pygame.sprite.Sprite):
                 pos = [self.rect.x - self.world.game_window_pos[0], self.rect.y - self.world.game_window_pos[1]]
                 
                 if pos[0] % 32 == 0 and pos[1] % 32 == 0 and r.randint(1, 16) == 1:
-                    self.rotate = change_rotate(0)
+                    self.rotate = self.change_rotate()
                 elif collide and r.randint(1, 4) == 1:
                     if pos[0] % 32 != 0 or pos[1] % 32 != 0:
                         self.rotate += 2
                         self.rotate = self.rotate % 4
                     else:
-                        self.rotate = cmd_change_rotate(self.rotate)
+                        self.rotate = self.cmd_change_rotate(self.rotate)
                 #стрельба
                 if r.randint(1, 32) == 1:
                     self.shoot()
@@ -203,3 +190,70 @@ class Enemy(pygame.sprite.Sprite):
                 else:
                     self.index += 1
             self.timer += 1
+
+    def change_rotate(self):
+        if self.world.steps < self.world.time_wait * 8:
+            stage = 0
+        elif self.world.steps < self.world.time_wait * 16:
+            stage = 1
+        else:
+            stage = 2
+        #
+        spos = [
+            int((self.rect.x - self.world.game_window_pos[0]) // 32),
+            int((self.rect.y - self.world.game_window_pos[1]) // 32)
+        ]
+        #
+        if stage == 0:#сменить направление на случайное
+            return(r.randint(0, 3))
+        elif stage == 1:#двигаться к игроку
+            pl = None
+            if self.world.count_of_players == 2:#ищем игрока
+                for p in self.world.players:
+                    if (int(self.number[1:]) % 2) == (p.number == "player2"):
+                        pl = p
+            else:
+                for p in self.world.players:
+                    pl = p
+            #
+            if pl != None:#если есть игрок, берем его позицию, иначе поворачиваем в случайном направлении
+                plpos = [
+                    int((pl.rect.x - self.world.game_window_pos[0]) // 32),
+                    int((pl.rect.y - self.world.game_window_pos[1]) // 32)
+                ]
+            else:
+               return(r.randint(0, 3))
+        elif stage == 2:#двигаться к базе
+            plpos = [12, 24]
+        #
+        if stage == 1 or stage == 2:
+            if r.randint(0, 1):
+                if spos[0] < plpos[0]:
+                    return(3)#вправо
+                elif spos[0] > plpos[0]:
+                    return(1)#влево
+                else:
+                    if spos[1] < plpos[1]:
+                        return(2)#вверх
+                    elif spos[1] > plpos[1]:
+                        return(0)#вниз
+            else:
+                if spos[1] < plpos[1]:
+                    return(2)#вверх
+                elif spos[1] > plpos[1]:
+                    return(0)#вниз
+                else:
+                    if spos[0] < plpos[0]:
+                        return(3)#вправо
+                    elif spos[0] > plpos[0]:
+                        return(1)#влево
+
+    def cmd_change_rotate(self, rotate):#повернуть
+        if r.randint(0, 1):#с шансом 1/2 сменить направление на направление из функции
+            return(self.change_rotate())
+        else:#иначе
+            if r.randint(0, 1):#с шансом 1/2 повернуть по часовой стрелке
+                rotate += 1
+            else:#иначе повернуть против часовой стрелки
+                rotate -= 1
+            return(rotate % 4)
