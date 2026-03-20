@@ -14,11 +14,16 @@ def border_collision(sprite):
     return(False)
 
 def block_collision(sprite, detectors=("cement", "water", "brick", "base")):
-    for x in range(26):
-        for y in range(26):
-            for i in range(len(detectors)):
-                if pygame.sprite.collide_rect(sprite.world.field[x][y], sprite) and sprite.world.field[x][y].type == detectors[i]:
-                    return(True)
+    spos = [#блок, в котором находится пуля
+        int((sprite.rect.x - sprite.world.game_window_pos[0]) // 32),
+        int((sprite.rect.y - sprite.world.game_window_pos[1]) // 32)
+    ]
+    for x in range(spos[0], spos[0] + 2):
+        for y in range(spos[1], spos[1] + 2):
+            if x >= 0 and x < 26 and y >= 0 and y < 26:
+                for i in range(len(detectors)):
+                    if pygame.sprite.collide_rect(sprite.world.field[x][y], sprite) and sprite.world.field[x][y].type == detectors[i]:
+                        return(True)
     return(False)
 
 def enemy_collision(sprite):
@@ -74,12 +79,17 @@ def collision_for_bullet(sprite):
     #проверка столкновения с границей
     if border_collision(sprite): ret = True
     #проверка столкновения с блоками
-    for x in range(26):
-        for y in range(26):
-            if sprite.world.field[x][y].type == "brick" or (sprite.world.field[x][y].type == "base" and sprite.world.field[x][y].is_break == 0) or sprite.world.field[x][y].type == "cement":
-                if pygame.sprite.collide_rect(sprite, sprite.world.field[x][y]):
-                    ret = True
-                    bl.append(sprite.world.field[x][y])
+    spos = [#блок, в котором находится пуля
+        int((sprite.rect.x - sprite.world.game_window_pos[0]) // 32),
+        int((sprite.rect.y - sprite.world.game_window_pos[1]) // 32)
+    ]
+    for x in range(spos[0], spos[0] + 2):
+        for y in range(spos[1], spos[1] + 2):
+            if x >= 0 and x < 26 and y >= 0 and y < 26:
+                if sprite.world.field[x][y].type == "brick" or (sprite.world.field[x][y].type == "base" and sprite.world.field[x][y].is_break == 0) or sprite.world.field[x][y].type == "cement":
+                    if pygame.sprite.collide_rect(sprite, sprite.world.field[x][y]):
+                        ret = True
+                        bl.append(sprite.world.field[x][y])
     if "player" in sprite.number:#если пулю выпустил игрок
         #проверка столкновений с врагами
         for e in sprite.world.enemies:
